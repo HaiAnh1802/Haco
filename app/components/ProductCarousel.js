@@ -6,6 +6,7 @@ import { getAllProducts } from "../data/products";
 import ShopFilter from "./ShopFilter";
 import Link from "next/link";
 import { useCart } from "../context/CartContext";
+import { supabase } from "../lib/supabase";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -120,6 +121,7 @@ export default function ProductCarousel() {
 
   const [pendingFilters, setPendingFilters] = useState(EMPTY_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
+  const [cardStyle, setCardStyle] = useState(null);
 
   useEffect(() => {
     getAllProducts().then((data) => {
@@ -130,6 +132,15 @@ export default function ProductCarousel() {
       }));
       setProducts(enriched);
     });
+    // Fetch card style settings
+    supabase
+      .from("featured_sections")
+      .select("card_style_data")
+      .eq("section_key", "product_card_style")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.card_style_data) setCardStyle(data.card_style_data);
+      });
   }, []);
 
   const handleSearch = () => {
@@ -167,8 +178,8 @@ export default function ProductCarousel() {
   return (
     <section id="shop" className="shop-section">
       <div className="section-header">
-        <p className="section-header__label">Mua Sắm</p>
-        <h2 className="section-header__title">Bộ sưu tập sản phẩm.</h2>
+        <p className="section-header__label" style={cardStyle ? { color: cardStyle.sectionLabelColor, fontSize: cardStyle.sectionLabelSize + "px" } : undefined}>Mua Sắm</p>
+        <h2 className="section-header__title" style={cardStyle ? { color: cardStyle.sectionTitleColor, fontSize: cardStyle.sectionTitleSize + "px" } : undefined}>Bộ sưu tập sản phẩm.</h2>
       </div>
 
       <div className="shop-layout">
@@ -231,18 +242,20 @@ export default function ProductCarousel() {
                     onMouseLeave={() => setHovered(null)}
                   >
                     <Link href={`/products/${product.slug}`} className="product-grid-card__link">
-                      <div className="product-grid-card__img-wrap">
+                      <div className="product-grid-card__img-wrap" style={cardStyle ? { aspectRatio: cardStyle.imgAspect, borderRadius: cardStyle.imgRadius + "px" } : undefined}>
                         {cardImage ? (
                           <>
                             <img
                               src={cardImage}
                               alt={product.name}
                               className={`product-grid-card__img primary ${hovered === product.slug ? "hidden" : ""}`}
+                              style={cardStyle ? { objectFit: cardStyle.imgFit } : undefined}
                             />
                             <img
                               src={hoverImg}
                               alt={product.name}
                               className={`product-grid-card__img hover ${hovered === product.slug ? "visible" : ""}`}
+                              style={cardStyle ? { objectFit: cardStyle.imgFit } : undefined}
                             />
                           </>
                         ) : (
@@ -253,20 +266,20 @@ export default function ProductCarousel() {
                       </div>
 
                       <div className="product-grid-card__info">
-                        <span className="product-grid-card__category">{product.category}</span>
-                        <h3 className="product-grid-card__name">{product.name}</h3>
+                        <span className="product-grid-card__category" style={cardStyle ? { color: cardStyle.categoryColor, fontSize: cardStyle.categorySize + "px" } : undefined}>{product.category}</span>
+                        <h3 className="product-grid-card__name" style={cardStyle ? { color: cardStyle.nameColor, fontSize: cardStyle.nameSize + "px" } : undefined}>{product.name}</h3>
                         <div className="product-grid-card__pricing">
                           {firstVariant?.sale_price ? (
                             <>
-                              <span className="product-grid-card__price sale">
+                              <span className="product-grid-card__price sale" style={cardStyle ? { color: cardStyle.salePriceColor, fontSize: cardStyle.priceSize + "px" } : undefined}>
                                 {Number(firstVariant.sale_price).toLocaleString("vi-VN")}đ
                               </span>
-                              <span className="product-grid-card__price original">
+                              <span className="product-grid-card__price original" style={cardStyle ? { fontSize: (parseInt(cardStyle.priceSize) - 2) + "px" } : undefined}>
                                 {Number(firstVariant.original_price).toLocaleString("vi-VN")}đ
                               </span>
                             </>
                           ) : firstVariant ? (
-                            <span className="product-grid-card__price">
+                            <span className="product-grid-card__price" style={cardStyle ? { color: cardStyle.priceColor, fontSize: cardStyle.priceSize + "px" } : undefined}>
                               {Number(firstVariant.original_price).toLocaleString("vi-VN")}đ
                             </span>
                           ) : null}
@@ -284,6 +297,7 @@ export default function ProductCarousel() {
                           setQuickAddProduct(product);
                         }}
                         title="Thêm vào giỏ hàng"
+                        style={cardStyle ? { background: cardStyle.cartIconBg, color: cardStyle.cartIconColor } : undefined}
                       >
                         🛒
                       </button>

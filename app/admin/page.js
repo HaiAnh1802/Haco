@@ -202,9 +202,11 @@ function AdminDashboard({ onLogout }) {
           <button className={`admin-tabs__btn ${activeTab === "orders" ? "active" : ""}`} onClick={() => setActiveTab("orders")}>📋 Đơn hàng</button>
         </div>
 
+        <AnnouncementBarEditor />
         <FeaturedSectionEditor products={products} />
         <FeatureSectionEditor />
         <BrandValuesEditor />
+        <ProductCardStyleEditor />
       </div>
     );
   }
@@ -819,6 +821,7 @@ function FeaturedSectionEditor({ products }) {
   const [bannerTitle, setBannerTitle] = useState("");
   const [bannerSubtitle, setBannerSubtitle] = useState("");
   const [bannerCta, setBannerCta] = useState("");
+  const [bannerCtaAlign, setBannerCtaAlign] = useState("bottom-center");
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const bannerFileRef = useRef(null);
 
@@ -844,6 +847,7 @@ function FeaturedSectionEditor({ products }) {
       setBannerTitle(data.banner_title || "");
       setBannerSubtitle(data.banner_subtitle || "");
       setBannerCta(data.banner_cta || "");
+      setBannerCtaAlign(data.banner_cta_align || "bottom-center");
     }
     setLoading(false);
   }
@@ -894,6 +898,7 @@ function FeaturedSectionEditor({ products }) {
         banner_title: bannerTitle,
         banner_subtitle: bannerSubtitle,
         banner_cta: bannerCta,
+        banner_cta_align: bannerCtaAlign,
         updated_at: new Date().toISOString(),
       };
 
@@ -990,6 +995,53 @@ function FeaturedSectionEditor({ products }) {
               onChange={e => setBannerCta(e.target.value)}
               placeholder="VD: Sắc màu mới đã có mặt"
             />
+          </div>
+          <div className="admin-form__field admin-form__field--full">
+            <label>Vị trí nút CTA trên ảnh</label>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "6px",
+              maxWidth: "240px",
+              marginTop: "8px",
+            }}>
+              {[
+                ["top-left","↖","Trên trái"],
+                ["top-center","↑","Trên giữa"],
+                ["top-right","↗","Trên phải"],
+                ["middle-left","←","Giữa trái"],
+                ["middle-center","⊙","Giữa"],
+                ["middle-right","→","Giữa phải"],
+                ["bottom-left","↙","Dưới trái"],
+                ["bottom-center","↓","Dưới giữa"],
+                ["bottom-right","↘","Dưới phải"],
+              ].map(([val, icon, label]) => (
+                <button
+                  key={val}
+                  type="button"
+                  title={label}
+                  onClick={() => setBannerCtaAlign(val)}
+                  style={{
+                    height: "52px",
+                    border: bannerCtaAlign === val ? "2px solid #4A9B7F" : "1px solid #DEE6DA",
+                    borderRadius: "8px",
+                    background: bannerCtaAlign === val ? "rgba(74,155,127,0.12)" : "#fff",
+                    cursor: "pointer",
+                    fontSize: "18px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "2px",
+                    transition: "all 0.15s",
+                    color: bannerCtaAlign === val ? "#4A9B7F" : "#5A6E5A",
+                  }}
+                >
+                  {icon}
+                  <span style={{ fontSize: "8px", letterSpacing: "0.5px" }}>{label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -1491,6 +1543,364 @@ function OrdersExport() {
         <div style={{ marginTop: "16px" }}>
           <button className="admin-btn admin-btn--primary admin-btn--lg" onClick={handleExport} disabled={loading} style={{ background: "#27ae60" }}>
             {loading ? "⏳ Đang xử lý..." : "📥 Tải Excel"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ============ ANNOUNCEMENT BAR EDITOR ============
+function AnnouncementBarEditor() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [sectionId, setSectionId] = useState(null);
+  const [annoText, setAnnoText] = useState("MIỄN PHÍ VẬN CHUYỂN CHO ĐƠN HÀNG TỪ 1.000.000₫");
+  const [annoBg, setAnnoBg] = useState("#000000");
+  const [annoColor, setAnnoColor] = useState("#ffffff");
+
+  useEffect(() => { fetchAnnouncement(); }, []);
+
+  async function fetchAnnouncement() {
+    setLoading(true);
+    const { data } = await supabase
+      .from("featured_sections")
+      .select("*")
+      .eq("section_key", "announcement")
+      .maybeSingle();
+    if (data) {
+      setSectionId(data.id);
+      if (data.announcement_text) setAnnoText(data.announcement_text);
+      if (data.announcement_bg) setAnnoBg(data.announcement_bg);
+      if (data.announcement_text_color) setAnnoColor(data.announcement_text_color);
+    }
+    setLoading(false);
+  }
+
+  function showMsg(type, text) {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 4000);
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const payload = {
+        section_key: "announcement",
+        announcement_text: annoText,
+        announcement_bg: annoBg,
+        announcement_text_color: annoColor,
+        updated_at: new Date().toISOString(),
+      };
+      if (sectionId) {
+        const { error } = await supabase.from("featured_sections").update(payload).eq("id", sectionId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from("featured_sections").insert([{ ...payload, product_ids: [] }]).select("id").single();
+        if (error) throw error;
+        setSectionId(data.id);
+      }
+      showMsg("success", "Đã lưu thanh thông báo!");
+    } catch (err) {
+      showMsg("error", "Lỗi: " + err.message);
+    }
+    setSaving(false);
+  }
+
+  if (loading) return null;
+
+  return (
+    <div className="admin-form" style={{ paddingTop: 0 }}>
+      {message && (
+        <div className={`admin-msg admin-msg--${message.type}`} onClick={() => setMessage(null)}>
+          {message.type === "success" ? "✅" : "❌"} {message.text}
+        </div>
+      )}
+      <section className="admin-form__section">
+        <h2 className="admin-form__section-title">📢 Thanh thông báo (Announcement Bar)</h2>
+
+        {/* Live Preview */}
+        <div style={{ marginBottom: "1.5rem" }}>
+          <label style={{ display: "block", marginBottom: "8px", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", color: "#5A6E5A" }}>Xem trước</label>
+          <div style={{
+            backgroundColor: annoBg,
+            color: annoColor,
+            padding: "10px 0",
+            overflow: "hidden",
+            borderRadius: "6px",
+            border: "1px solid #DEE6DA",
+          }}>
+            <div style={{ display: "flex", whiteSpace: "nowrap", animation: "marquee 10s linear infinite" }}>
+              {[...Array(6)].map((_, i) => (
+                <span key={i} style={{ fontSize: "11px", letterSpacing: "1.5px", textTransform: "uppercase", padding: "0 3rem", flexShrink: 0 }}>
+                  {annoText || "Nội dung thông báo"} &nbsp;•&nbsp;
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-form__grid">
+          <div className="admin-form__field admin-form__field--full">
+            <label>Nội dung thông báo</label>
+            <input
+              type="text"
+              value={annoText}
+              onChange={e => setAnnoText(e.target.value)}
+              placeholder="VD: MIỄN PHÍ VẬN CHUYỂN CHO ĐƠN HÀNG TỪ 1.000.000₫"
+            />
+          </div>
+          <div className="admin-form__field">
+            <label>Màu nền (Background)</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <input
+                type="color"
+                value={annoBg}
+                onChange={e => setAnnoBg(e.target.value)}
+                style={{ width: "48px", height: "48px", padding: "2px", border: "1px solid #DEE6DA", borderRadius: "6px", cursor: "pointer", background: "none" }}
+              />
+              <input
+                type="text"
+                value={annoBg}
+                onChange={e => setAnnoBg(e.target.value)}
+                placeholder="#000000"
+                style={{ flex: 1 }}
+              />
+            </div>
+          </div>
+          <div className="admin-form__field">
+            <label>Màu chữ (Text Color)</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <input
+                type="color"
+                value={annoColor}
+                onChange={e => setAnnoColor(e.target.value)}
+                style={{ width: "48px", height: "48px", padding: "2px", border: "1px solid #DEE6DA", borderRadius: "6px", cursor: "pointer", background: "none" }}
+              />
+              <input
+                type="text"
+                value={annoColor}
+                onChange={e => setAnnoColor(e.target.value)}
+                placeholder="#ffffff"
+                style={{ flex: 1 }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: "16px" }}>
+          <button className="admin-btn admin-btn--primary" onClick={handleSave} disabled={saving}>
+            {saving ? "⏳ Đang lưu..." : "💾 Lưu thông báo"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ============ PRODUCT CARD STYLE EDITOR ============
+const DEFAULT_CARD_STYLE = {
+  sectionLabelColor: "#4A9B7F",
+  sectionLabelSize: "12",
+  sectionTitleColor: "#1B2A1B",
+  sectionTitleSize: "24",
+  categoryColor: "#4A9B7F",
+  categorySize: "10",
+  nameColor: "#1B2A1B",
+  nameSize: "13",
+  priceColor: "#1B2A1B",
+  priceSize: "14",
+  salePriceColor: "#e74c3c",
+  cartIconBg: "#1B2A1B",
+  cartIconColor: "#ffffff",
+  imgAspect: "1",
+  imgFit: "cover",
+  imgRadius: "12",
+};
+
+function ProductCardStyleEditor() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [sectionId, setSectionId] = useState(null);
+  const [style, setStyle] = useState(DEFAULT_CARD_STYLE);
+
+  useEffect(() => { fetchStyle(); }, []);
+
+  async function fetchStyle() {
+    setLoading(true);
+    const { data } = await supabase
+      .from("featured_sections")
+      .select("*")
+      .eq("section_key", "product_card_style")
+      .maybeSingle();
+    if (data) {
+      setSectionId(data.id);
+      if (data.card_style_data) {
+        setStyle(prev => ({ ...prev, ...data.card_style_data }));
+      }
+    }
+    setLoading(false);
+  }
+
+  function showMsg(type, text) {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 4000);
+  }
+
+  function updateStyle(key, value) {
+    setStyle(prev => ({ ...prev, [key]: value }));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const payload = {
+        section_key: "product_card_style",
+        card_style_data: style,
+        updated_at: new Date().toISOString(),
+      };
+      if (sectionId) {
+        const { error } = await supabase.from("featured_sections").update(payload).eq("id", sectionId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from("featured_sections").insert([{ ...payload, product_ids: [] }]).select("id").single();
+        if (error) throw error;
+        setSectionId(data.id);
+      }
+      showMsg("success", "Đã lưu kiểu hiển thị card!");
+    } catch (err) {
+      showMsg("error", "Lỗi: " + err.message);
+    }
+    setSaving(false);
+  }
+
+  function handleReset() {
+    setStyle(DEFAULT_CARD_STYLE);
+  }
+
+  if (loading) return null;
+
+  const aspectLabels = { "1": "1:1 Vuông", "0.75": "3:4 Dọc", "1.333": "4:3 Ngang", "0.8": "4:5 Dọc cao" };
+  const fitLabels = { "cover": "Lấp đầy (Cover)", "contain": "Vừa khung (Contain)" };
+
+  // Helper component for color+text input row
+  function ColorInput({ label, colorKey, sizeKey }) {
+    return (
+      <div style={{ display: "flex", gap: "10px", alignItems: "flex-end", marginBottom: "12px" }}>
+        <div style={{ flex: 1 }}>
+          <label style={{ display: "block", fontSize: "11px", fontWeight: 600, marginBottom: "4px", color: "#5A6E5A" }}>{label} - Màu</label>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <input type="color" value={style[colorKey]} onChange={e => updateStyle(colorKey, e.target.value)} style={{ width: "36px", height: "36px", padding: "2px", border: "1px solid #DEE6DA", borderRadius: "6px", cursor: "pointer", background: "none" }} />
+            <input type="text" value={style[colorKey]} onChange={e => updateStyle(colorKey, e.target.value)} style={{ flex: 1, padding: "8px", border: "1px solid #DEE6DA", borderRadius: "6px", fontSize: "12px" }} />
+          </div>
+        </div>
+        {sizeKey && (
+          <div style={{ width: "90px" }}>
+            <label style={{ display: "block", fontSize: "11px", fontWeight: 600, marginBottom: "4px", color: "#5A6E5A" }}>Cỡ (px)</label>
+            <input type="number" min="8" max="48" value={style[sizeKey]} onChange={e => updateStyle(sizeKey, e.target.value)} style={{ width: "100%", padding: "8px", border: "1px solid #DEE6DA", borderRadius: "6px", fontSize: "12px" }} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-form" style={{ paddingTop: 0 }}>
+      {message && (
+        <div className={`admin-msg admin-msg--${message.type}`} onClick={() => setMessage(null)}>
+          {message.type === "success" ? "✅" : "❌"} {message.text}
+        </div>
+      )}
+      <section className="admin-form__section">
+        <h2 className="admin-form__section-title">🎨 Kiểu hiển thị Card sản phẩm</h2>
+
+        {/* Live Preview */}
+        <div style={{ marginBottom: "1.5rem" }}>
+          <label style={{ display: "block", marginBottom: "8px", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", color: "#5A6E5A" }}>Xem trước</label>
+          <div style={{ background: "#FAFBF9", border: "1px solid #DEE6DA", borderRadius: "12px", padding: "20px", display: "flex", justifyContent: "center" }}>
+            <div style={{ width: "200px" }}>
+              <div style={{ width: "100%", aspectRatio: style.imgAspect, borderRadius: style.imgRadius + "px", overflow: "hidden", background: "#F0F4EE", marginBottom: "12px", position: "relative" }}>
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem", color: "#ccc" }}>📦</div>
+                <div style={{ position: "absolute", bottom: "8px", right: "8px", width: "28px", height: "28px", borderRadius: "50%", background: style.cartIconBg, color: style.cartIconColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>🛒</div>
+              </div>
+              <div>
+                <span style={{ fontSize: style.categorySize + "px", color: style.categoryColor, fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", display: "block", marginBottom: "4px" }}>DẦU GỘI</span>
+                <div style={{ fontSize: style.nameSize + "px", color: style.nameColor, fontWeight: 500, marginBottom: "6px", lineHeight: 1.4 }}>Tên sản phẩm mẫu</div>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  <span style={{ fontSize: style.priceSize + "px", color: style.salePriceColor, fontWeight: 600 }}>59.000đ</span>
+                  <span style={{ fontSize: (parseInt(style.priceSize) - 2) + "px", color: "#8A9B8A", textDecoration: "line-through" }}>63.000đ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section Header Settings */}
+        <div style={{ marginBottom: "20px", padding: "16px", background: "rgba(74,155,127,0.04)", borderRadius: "10px", border: "1px solid #DEE6DA" }}>
+          <h3 style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "#1B2A1B" }}>📌 Tiêu đề section</h3>
+          <ColorInput label="Nhãn phụ (MUA SẮM)" colorKey="sectionLabelColor" sizeKey="sectionLabelSize" />
+          <ColorInput label="Tiêu đề chính" colorKey="sectionTitleColor" sizeKey="sectionTitleSize" />
+        </div>
+
+        {/* Card Text Settings */}
+        <div style={{ marginBottom: "20px", padding: "16px", background: "rgba(74,155,127,0.04)", borderRadius: "10px", border: "1px solid #DEE6DA" }}>
+          <h3 style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "#1B2A1B" }}>✏️ Chữ trên card</h3>
+          <ColorInput label="Loại sản phẩm" colorKey="categoryColor" sizeKey="categorySize" />
+          <ColorInput label="Tên sản phẩm" colorKey="nameColor" sizeKey="nameSize" />
+          <ColorInput label="Giá" colorKey="priceColor" sizeKey="priceSize" />
+          <ColorInput label="Giá sale" colorKey="salePriceColor" />
+        </div>
+
+        {/* Cart Icon Settings */}
+        <div style={{ marginBottom: "20px", padding: "16px", background: "rgba(74,155,127,0.04)", borderRadius: "10px", border: "1px solid #DEE6DA" }}>
+          <h3 style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "#1B2A1B" }}>🛒 Nút giỏ hàng</h3>
+          <ColorInput label="Màu nền" colorKey="cartIconBg" />
+          <ColorInput label="Màu icon" colorKey="cartIconColor" />
+        </div>
+
+        {/* Image Settings */}
+        <div style={{ marginBottom: "20px", padding: "16px", background: "rgba(74,155,127,0.04)", borderRadius: "10px", border: "1px solid #DEE6DA" }}>
+          <h3 style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "#1B2A1B" }}>🖼️ Hiển thị ảnh</h3>
+          
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", fontSize: "11px", fontWeight: 600, marginBottom: "6px", color: "#5A6E5A" }}>Tỷ lệ khung ảnh</label>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              {Object.entries(aspectLabels).map(([val, label]) => (
+                <button key={val} type="button" onClick={() => updateStyle("imgAspect", val)} style={{ padding: "8px 14px", border: style.imgAspect === val ? "2px solid #4A9B7F" : "1px solid #DEE6DA", borderRadius: "8px", background: style.imgAspect === val ? "rgba(74,155,127,0.12)" : "#fff", cursor: "pointer", fontSize: "11px", fontWeight: 500, color: style.imgAspect === val ? "#4A9B7F" : "#5A6E5A", transition: "all 0.15s" }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", fontSize: "11px", fontWeight: 600, marginBottom: "6px", color: "#5A6E5A" }}>Cách hiển thị ảnh</label>
+            <div style={{ display: "flex", gap: "6px" }}>
+              {Object.entries(fitLabels).map(([val, label]) => (
+                <button key={val} type="button" onClick={() => updateStyle("imgFit", val)} style={{ padding: "8px 14px", border: style.imgFit === val ? "2px solid #4A9B7F" : "1px solid #DEE6DA", borderRadius: "8px", background: style.imgFit === val ? "rgba(74,155,127,0.12)" : "#fff", cursor: "pointer", fontSize: "11px", fontWeight: 500, color: style.imgFit === val ? "#4A9B7F" : "#5A6E5A", transition: "all 0.15s" }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: "11px", fontWeight: 600, marginBottom: "6px", color: "#5A6E5A" }}>Bo góc ảnh (px)</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <input type="range" min="0" max="30" value={style.imgRadius} onChange={e => updateStyle("imgRadius", e.target.value)} style={{ flex: 1 }} />
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "#1B2A1B", minWidth: "35px" }}>{style.imgRadius}px</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+          <button className="admin-btn admin-btn--primary" onClick={handleSave} disabled={saving}>
+            {saving ? "⏳ Đang lưu..." : "💾 Lưu kiểu card"}
+          </button>
+          <button className="admin-btn admin-btn--ghost" onClick={handleReset}>
+            ↩️ Khôi phục mặc định
           </button>
         </div>
       </section>
