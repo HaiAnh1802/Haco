@@ -1157,7 +1157,9 @@ h6 {
     position: static;
     transform: none;
     flex: 1;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .header__logo-text {

@@ -98,7 +98,7 @@ export default function Header() {
 
           {/* Logo center */}
           <a href="/" className="header__logo">
-            <span className="header__logo-text">haco</span>
+            <img src="/images/avatar.png" alt="Haco" className="header__logo-img" style={{ height: "52px", width: "auto" }} />
           </a>
 
           {/* Right actions */}
