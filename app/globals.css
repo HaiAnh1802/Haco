@@ -3834,6 +3834,239 @@ h6 {
   background: rgba(220, 53, 69, 1);
 }
 
+/* ========== HERO SLIDER ========== */
+.hero-slider {
+  position: relative;
+  cursor: grab;
+}
+
+.hero-slider:active {
+  cursor: grabbing;
+}
+
+.hero-slider__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #1B2A1B;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  opacity: 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.hero-slider:hover .hero-slider__arrow {
+  opacity: 1;
+}
+
+.hero-slider__arrow:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.hero-slider__arrow--prev {
+  left: 16px;
+}
+
+.hero-slider__arrow--next {
+  right: 16px;
+}
+
+.hero-slider__dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 20px;
+}
+
+.hero-slider__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.hero-slider__dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
+.hero-slider__dot.active {
+  background: #fff;
+  width: 28px;
+  border-radius: 5px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+@media (max-width: 768px) {
+  .hero-slider__arrow {
+    width: 36px;
+    height: 36px;
+    opacity: 0.7;
+  }
+
+  .hero-slider__arrow--prev {
+    left: 8px;
+  }
+
+  .hero-slider__arrow--next {
+    right: 8px;
+  }
+
+  .hero-slider__dots {
+    bottom: 12px;
+    gap: 8px;
+    padding: 6px 12px;
+  }
+
+  .hero-slider__dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .hero-slider__dot.active {
+    width: 22px;
+  }
+}
+
+/* ========== ADMIN BANNER SLIDES MANAGER ========== */
+.admin-banner-slides {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-banner-slides__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.admin-banner-slides__item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  aspect-ratio: 16 / 9;
+}
+
+.admin-banner-slides__item:hover {
+  border-color: rgba(124, 92, 252, 0.4);
+}
+
+.admin-banner-slides__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-banner-slides__item-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.admin-banner-slides__item:hover .admin-banner-slides__item-overlay {
+  opacity: 1;
+}
+
+.admin-banner-slides__item-index {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(124, 92, 252, 0.8);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.admin-banner-slides__item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.admin-banner-slides__item-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+}
+
+.admin-banner-slides__item-btn:hover {
+  transform: scale(1.1);
+}
+
+.admin-banner-slides__item-btn--delete {
+  background: rgba(220, 53, 69, 0.9);
+  color: #fff;
+}
+
+.admin-banner-slides__item-btn--delete:hover {
+  background: rgba(220, 53, 69, 1);
+}
+
+.admin-banner-slides__upload {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+
+.admin-banner-slides__empty {
+  padding: 40px 20px;
+  text-align: center;
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 14px;
+}
+
+.admin-banner-slides__empty span {
+  display: block;
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
 /* ========== ADMIN FORM FOOTER ========== */
 .admin-form__footer {
   position: sticky;

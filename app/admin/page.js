@@ -818,12 +818,14 @@ function FeaturedSectionEditor({ products }) {
   const [sectionId, setSectionId] = useState(null);
   // Banner fields
   const [bannerImage, setBannerImage] = useState("");
+  const [bannerSlides, setBannerSlides] = useState([]);
   const [bannerTitle, setBannerTitle] = useState("");
   const [bannerSubtitle, setBannerSubtitle] = useState("");
   const [bannerCta, setBannerCta] = useState("");
   const [bannerCtaAlign, setBannerCtaAlign] = useState("bottom-center");
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const bannerFileRef = useRef(null);
+  const bannerSlidesFileRef = useRef(null);
 
   useEffect(() => {
     fetchSection();
@@ -844,6 +846,7 @@ function FeaturedSectionEditor({ products }) {
       setSelectedIds(data.product_ids || []);
       setIsActive(data.is_active !== false);
       setBannerImage(data.banner_image || "");
+      setBannerSlides(data.banner_slides || []);
       setBannerTitle(data.banner_title || "");
       setBannerSubtitle(data.banner_subtitle || "");
       setBannerCta(data.banner_cta || "");
@@ -852,24 +855,54 @@ function FeaturedSectionEditor({ products }) {
     setLoading(false);
   }
 
-  async function handleUploadBanner(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function handleUploadBannerSlides(e) {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
     setUploadingBanner(true);
-    const url = await uploadProductImage(file, BANNER_UPLOAD_FOLDER);
-    if (url) {
-      setBannerImage(url);
-      showMsg("success", "Đã upload ảnh banner");
-    } else {
-      showMsg("error", "Lỗi upload ảnh banner");
+    const uploaded = [];
+    for (const file of files) {
+      const url = await uploadProductImage(file, BANNER_UPLOAD_FOLDER);
+      if (url) {
+        uploaded.push({ url, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) });
+      } else {
+        showMsg("error", `Lỗi upload "${file.name}"`);
+      }
+    }
+    if (uploaded.length) {
+      setBannerSlides(prev => [...prev, ...uploaded]);
+      // Also set first image as banner_image for backward compatibility
+      if (!bannerImage && uploaded.length > 0) {
+        setBannerImage(uploaded[0].url);
+      }
+      showMsg("success", `Đã upload ${uploaded.length} ảnh banner`);
     }
     setUploadingBanner(false);
-    if (bannerFileRef.current) bannerFileRef.current.value = "";
+    if (bannerSlidesFileRef.current) bannerSlidesFileRef.current.value = "";
   }
 
-  function removeBannerImage() {
-    if (bannerImage && !bannerImage.startsWith("/")) deleteProductImage(bannerImage);
-    setBannerImage("");
+  function removeBannerSlide(slideId) {
+    const slide = bannerSlides.find(s => s.id === slideId);
+    if (slide && slide.url && !slide.url.startsWith("/")) {
+      deleteProductImage(slide.url);
+    }
+    const newSlides = bannerSlides.filter(s => s.id !== slideId);
+    setBannerSlides(newSlides);
+    // Update banner_image to first slide or empty
+    if (newSlides.length > 0) {
+      setBannerImage(newSlides[0].url);
+    } else {
+      setBannerImage("");
+    }
+  }
+
+  function moveSlide(fromIdx, toIdx) {
+    if (toIdx < 0 || toIdx >= bannerSlides.length) return;
+    const newSlides = [...bannerSlides];
+    const [moved] = newSlides.splice(fromIdx, 1);
+    newSlides.splice(toIdx, 0, moved);
+    setBannerSlides(newSlides);
+    // Keep banner_image in sync with first slide
+    setBannerImage(newSlides[0]?.url || "");
   }
 
   function showMsg(type, text) {
@@ -894,7 +927,8 @@ function FeaturedSectionEditor({ products }) {
         description,
         product_ids: selectedIds,
         is_active: isActive,
-        banner_image: bannerImage,
+        banner_image: bannerSlides.length > 0 ? bannerSlides[0].url : bannerImage,
+        banner_slides: bannerSlides,
         banner_title: bannerTitle,
         banner_subtitle: bannerSubtitle,
         banner_cta: bannerCta,
@@ -946,24 +980,57 @@ function FeaturedSectionEditor({ products }) {
         </div>
       )}
 
-      {/* Banner Settings */}
+      {/* Banner Slides Settings */}
       <section className="admin-form__section">
-        <h2 className="admin-form__section-title">🖼️ Banner trang chủ</h2>
+        <h2 className="admin-form__section-title">🖼️ Banner Slideshow trang chủ</h2>
 
         <div className="admin-form__field" style={{ marginBottom: "1rem" }}>
-          <label>Ảnh banner</label>
-          <div className="admin-banner-preview">
-            {bannerImage && (
-              <div className="admin-banner-preview__img-wrap">
-                <img src={bannerImage} alt="Banner preview" />
-                <button className="admin-banner-preview__remove" onClick={removeBannerImage}>✕ Xóa ảnh</button>
+          <label>Ảnh banner slide ({bannerSlides.length} ảnh)</label>
+          <div className="admin-banner-slides">
+            {bannerSlides.length > 0 ? (
+              <div className="admin-banner-slides__list">
+                {bannerSlides.map((slide, idx) => (
+                  <div key={slide.id} className="admin-banner-slides__item">
+                    <img src={slide.url} alt={`Slide ${idx + 1}`} />
+                    <div className="admin-banner-slides__item-overlay">
+                      <span className="admin-banner-slides__item-index">#{idx + 1}</span>
+                      <div className="admin-banner-slides__item-actions">
+                        {idx > 0 && (
+                          <button
+                            className="admin-banner-slides__item-btn"
+                            onClick={() => moveSlide(idx, idx - 1)}
+                            title="Di chuyển lên"
+                          >←</button>
+                        )}
+                        {idx < bannerSlides.length - 1 && (
+                          <button
+                            className="admin-banner-slides__item-btn"
+                            onClick={() => moveSlide(idx, idx + 1)}
+                            title="Di chuyển xuống"
+                          >→</button>
+                        )}
+                        <button
+                          className="admin-banner-slides__item-btn admin-banner-slides__item-btn--delete"
+                          onClick={() => removeBannerSlide(slide.id)}
+                          title="Xóa ảnh"
+                        >✕</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="admin-banner-slides__empty">
+                <span>🖼️</span>
+                <p>Chưa có ảnh banner nào. Upload ảnh để tạo slideshow!</p>
               </div>
             )}
-            <div className="admin-upload-btns">
+            <div className="admin-banner-slides__upload">
               <label className={`admin-btn admin-btn--sm admin-btn--primary ${uploadingBanner ? "admin-btn--loading" : ""}`}>
                 {uploadingBanner ? "⏳ Đang upload..." : "📤 Upload ảnh banner"}
-                <input type="file" accept="image/*" hidden ref={bannerFileRef} onChange={handleUploadBanner} disabled={uploadingBanner} />
+                <input type="file" accept="image/*" multiple hidden ref={bannerSlidesFileRef} onChange={handleUploadBannerSlides} disabled={uploadingBanner} />
               </label>
+              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Chọn nhiều ảnh cùng lúc để tạo slideshow</span>
             </div>
           </div>
         </div>

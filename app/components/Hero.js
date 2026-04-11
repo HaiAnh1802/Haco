@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase";
 
 // Map vị trí → CSS style
@@ -21,13 +21,18 @@ function getAlignStyle(align) {
 
 export default function Hero() {
   const [data, setData] = useState(null);
+  const [slides, setSlides] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const timerRef = useRef(null);
+  const touchStartRef = useRef(0);
 
   useEffect(() => {
     async function fetchHero() {
       try {
         const { data: section } = await supabase
           .from("featured_sections")
-          .select("banner_image, banner_title, banner_subtitle, banner_cta, banner_cta_align")
+          .select("banner_image, banner_title, banner_subtitle, banner_cta, banner_cta_align, banner_slides")
           .eq("section_key", "editorial")
           .maybeSingle();
 
@@ -39,29 +44,94 @@ export default function Hero() {
             banner_cta: section.banner_cta || "",
             banner_cta_align: section.banner_cta_align || "bottom-center",
           });
+
+          // Use banner_slides if available, otherwise fallback to single banner_image
+          const slideList = section.banner_slides && section.banner_slides.length > 0
+            ? section.banner_slides.map(s => s.url)
+            : [section.banner_image || "/images/hero.png"];
+          setSlides(slideList);
         } else {
           setData({ banner_image: "/images/hero.png", banner_title: "", banner_subtitle: "", banner_cta: "", banner_cta_align: "bottom-center" });
+          setSlides(["/images/hero.png"]);
         }
       } catch (err) {
         console.error("Error fetching hero:", err);
         setData({ banner_image: "/images/hero.png", banner_title: "", banner_subtitle: "", banner_cta: "", banner_cta_align: "bottom-center" });
+        setSlides(["/images/hero.png"]);
       }
     }
     fetchHero();
   }, []);
 
+  // Auto-advance slides
+  const goToSlide = useCallback((idx) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentSlide(idx);
+    setTimeout(() => setIsTransitioning(false), 600);
+  }, [isTransitioning]);
+
+  const nextSlide = useCallback(() => {
+    if (slides.length <= 1) return;
+    goToSlide((currentSlide + 1) % slides.length);
+  }, [currentSlide, slides.length, goToSlide]);
+
+  const prevSlide = useCallback(() => {
+    if (slides.length <= 1) return;
+    goToSlide((currentSlide - 1 + slides.length) % slides.length);
+  }, [currentSlide, slides.length, goToSlide]);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    timerRef.current = setInterval(nextSlide, 5000);
+    return () => clearInterval(timerRef.current);
+  }, [slides.length, nextSlide]);
+
+  // Touch handlers for mobile swipe
+  function handleTouchStart(e) {
+    touchStartRef.current = e.touches[0].clientX;
+  }
+
+  function handleTouchEnd(e) {
+    const diff = touchStartRef.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) nextSlide();
+      else prevSlide();
+    }
+  }
+
   if (!data) return null;
 
   const hasContent = data.banner_subtitle || data.banner_title || data.banner_cta;
   const alignStyle = getAlignStyle(data.banner_cta_align);
+  const showControls = slides.length > 1;
 
   return (
-    <section style={{ position: "relative", width: "100%", overflow: "hidden", lineHeight: 0 }}>
-      <img
-        src={data.banner_image}
-        alt={data.banner_title || "Banner"}
-        style={{ width: "100%", height: "auto", display: "block" }}
-      />
+    <section
+      className="hero-slider"
+      style={{ position: "relative", width: "100%", overflow: "hidden", lineHeight: 0 }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Slides */}
+      <div className="hero-slider__track" style={{
+        display: "flex",
+        width: `${slides.length * 100}%`,
+        transform: `translateX(-${currentSlide * (100 / slides.length)}%)`,
+        transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
+      }}>
+        {slides.map((url, i) => (
+          <div key={i} style={{ width: `${100 / slides.length}%`, flexShrink: 0 }}>
+            <img
+              src={url}
+              alt={`Banner ${i + 1}`}
+              style={{ width: "100%", height: "auto", display: "block" }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Text overlay */}
       {hasContent && (
         <div style={alignStyle}>
           {data.banner_subtitle && (
@@ -97,6 +167,44 @@ export default function Hero() {
               </svg>
             </a>
           )}
+        </div>
+      )}
+
+      {/* Arrow Controls */}
+      {showControls && (
+        <>
+          <button
+            className="hero-slider__arrow hero-slider__arrow--prev"
+            onClick={prevSlide}
+            aria-label="Previous slide"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            className="hero-slider__arrow hero-slider__arrow--next"
+            onClick={nextSlide}
+            aria-label="Next slide"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </>
+      )}
+
+      {/* Dot Indicators */}
+      {showControls && (
+        <div className="hero-slider__dots">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              className={`hero-slider__dot ${i === currentSlide ? "active" : ""}`}
+              onClick={() => goToSlide(i)}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
         </div>
       )}
     </section>
