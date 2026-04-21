@@ -1,66 +1,121 @@
+"use client";
+
+import Link from "next/link";
+import { SUPPORT_LINKS, POLICY_LINKS } from "../data/footerPages";
+
 export default function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer__inner">
-        <div className="footer__grid">
-          {/* Điều hướng */}
-          <div>
-            <h4 className="footer__col-title">Điều Hướng</h4>
-            <div className="footer__col-links">
-              <a href="#" className="footer__link">Cửa Hàng</a>
-              <a href="#" className="footer__link">Câu Chuyện</a>
-              <a href="#" className="footer__link">Rhode Futures</a>
-              <a href="#" className="footer__link">Tác Động</a>
-              <a href="#" className="footer__link">VLOG</a>
-              <a href="#" className="footer__link">Tìm Chúng Tôi</a>
+    <footer className="site-footer">
+      <div className="site-footer__inner">
+        <div className="site-footer__top">
+          {/* Col 1: Logo + brand info */}
+          <div className="site-footer__col site-footer__col--brand">
+            <div className="site-footer__logo">
+              <img src="/images/avatar.png" alt="Haco" className="site-footer__logo-img" />
+              <div>
+                <div className="site-footer__logo-name">HACO</div>
+                <div className="site-footer__logo-sub">COSMETICS</div>
+              </div>
             </div>
+            <ul className="site-footer__contact">
+              <li>
+                <span className="site-footer__ico">🏢</span>
+                <span>CÔNG TY TNHH THƯƠNG MẠI VÀ DỊCH VỤ QUỐC TẾ HACO</span>
+              </li>
+              <li>
+                <span className="site-footer__ico">🏠</span>
+                <span>B-TT4-4 Him Lam Vạn Phúc, Hà Đông, Hà Nội</span>
+              </li>
+              <li>
+                <span className="site-footer__ico">📞</span>
+                <span>0979 928 612</span>
+              </li>
+              <li>
+                <span className="site-footer__ico">✉️</span>
+                <span>haco.tmdv@gmail.com</span>
+              </li>
+            </ul>
           </div>
 
-          {/* Mạng xã hội */}
-          <div>
-            <h4 className="footer__col-title">Mạng Xã Hội</h4>
-            <div className="footer__col-links">
-              <a href="https://instagram.com/rhode" className="footer__link" target="_blank" rel="noopener noreferrer">Instagram</a>
-              <a href="https://youtube.com" className="footer__link" target="_blank" rel="noopener noreferrer">Youtube</a>
-              <a href="https://tiktok.com/@rhode" className="footer__link" target="_blank" rel="noopener noreferrer">TikTok</a>
-              <a href="https://pinterest.com/rhode" className="footer__link" target="_blank" rel="noopener noreferrer">Pinterest</a>
-            </div>
+          {/* Col 2: Hỗ trợ khách hàng */}
+          <div className="site-footer__col">
+            <h4 className="site-footer__title">Hỗ trợ khách hàng</h4>
+            <ul className="site-footer__links">
+              {SUPPORT_LINKS.map((item) => (
+                <li key={item.slug}>
+                  <Link href={`/page/${item.slug}`}>{item.label}</Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Chính sách */}
-          <div>
-            <h4 className="footer__col-title">Chính Sách</h4>
-            <div className="footer__col-links">
-              <a href="#" className="footer__link">Quyền Riêng Tư</a>
-              <a href="#" className="footer__link">Điều Khoản</a>
-              <a href="#" className="footer__link">Tuyên Bố Trợ Năng</a>
-              <a href="#" className="footer__link">Câu Hỏi Thường Gặp</a>
-              <a href="#" className="footer__link">Liên Hệ</a>
-              <a href="#" className="footer__link">Sự Kiện</a>
-            </div>
-          </div>
-
-          {/* Hỗ trợ */}
-          <div>
-            <h4 className="footer__col-title">Hỗ Trợ</h4>
-            <p className="footer__support-time">
-              Chúng tôi có mặt T2-T6, 9h - 17h.
-            </p>
-            <div className="footer__col-links">
-              <a href="#" className="footer__link">Gửi tin nhắn cho chúng tôi bất cứ lúc nào.</a>
-            </div>
+          {/* Col 3: Chính sách */}
+          <div className="site-footer__col">
+            <h4 className="site-footer__title">Chính sách</h4>
+            <ul className="site-footer__links">
+              {POLICY_LINKS.map((item) => (
+                <li key={item.slug}>
+                  <Link href={`/page/${item.slug}`}>{item.label}</Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        <div className="footer__bottom">
-          <p className="footer__copyright">© rhode 2026</p>
-          <div className="footer__social">
-            <a href="https://instagram.com/rhode" className="footer__social-link" target="_blank" rel="noopener noreferrer">IG</a>
-            <a href="https://youtube.com" className="footer__social-link" target="_blank" rel="noopener noreferrer">YT</a>
-            <a href="https://tiktok.com/@rhode" className="footer__social-link" target="_blank" rel="noopener noreferrer">TK</a>
-            <a href="https://pinterest.com/rhode" className="footer__social-link" target="_blank" rel="noopener noreferrer">PT</a>
+        {/* BOTTOM: social + fanpage */}
+        <div className="site-footer__bottom-grid">
+          <div>
+            <h4 className="site-footer__title">Mạng xã hội</h4>
+            <div className="site-footer__social">
+              <a
+                href="https://www.facebook.com/share/1DGWHoaGRm/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="site-footer__social-icon site-footer__social-icon--fb"
+              >f</a>
+              <a
+                href="https://tiktok.com/@hacocosmetics"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="TikTok"
+                className="site-footer__social-icon site-footer__social-icon--tt"
+              >♪</a>
+              <a
+                href="https://www.instagram.com/haco.cosmetics"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="site-footer__social-icon site-footer__social-icon--ig"
+              >Ig</a>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="site-footer__title">Fanpage</h4>
+            <div className="site-footer__fanpage">
+              <div className="site-footer__fanpage-head">
+                <img src="/images/avatar.png" alt="Haco" className="site-footer__fanpage-avatar-img" />
+                <div>
+                  <div className="site-footer__fanpage-name">Haco Cosmetics</div>
+                  <div className="site-footer__fanpage-followers">Theo dõi để nhận ưu đãi mới nhất</div>
+                </div>
+              </div>
+              <div className="site-footer__fanpage-actions">
+                <a
+                  href="https://www.facebook.com/share/1DGWHoaGRm/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="site-footer__fanpage-follow"
+                >👍 Theo dõi Trang</a>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+
+      <div className="site-footer__copyright">
+        Copyright © 2025 Haco Cosmetics
       </div>
     </footer>
   );

@@ -5,7 +5,6 @@ import ProductCarousel from "./components/ProductCarousel";
 import Editorial from "./components/Editorial";
 import Feature from "./components/Feature";
 import BrandValues from "./components/BrandValues";
-import Newsletter from "./components/Newsletter";
 import Footer from "./components/Footer";
 import ScrollAnimations from "./components/ScrollAnimations";
 
@@ -33,10 +32,6 @@ export default function Home() {
 
         <div className="fade-in">
           <BrandValues />
-        </div>
-
-        <div className="fade-in">
-          <Newsletter />
         </div>
       </main>
 

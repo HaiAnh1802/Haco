@@ -90,6 +90,37 @@ function AdminDashboard({ onLogout }) {
   const [search, setSearch] = useState("");
   const [editingProduct, setEditingProduct] = useState(null); // null = list view, object = form view
   const [isNew, setIsNew] = useState(false);
+  const [theme, setTheme] = useState("dark");
+
+  // Load saved theme
+  useEffect(() => {
+    const saved = localStorage.getItem("admin_theme");
+    if (saved === "light" || saved === "dark") setTheme(saved);
+  }, []);
+
+  // Apply theme class to body
+  useEffect(() => {
+    if (theme === "light") document.body.classList.add("admin-theme-light");
+    else document.body.classList.remove("admin-theme-light");
+    localStorage.setItem("admin_theme", theme);
+    return () => document.body.classList.remove("admin-theme-light");
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(t => (t === "dark" ? "light" : "dark"));
+
+  const headerRight = (
+    <div className="admin-panel__header-right">
+      <button
+        className="admin-btn admin-btn--ghost admin-theme-toggle"
+        onClick={toggleTheme}
+        title={theme === "dark" ? "Chuyển sang nền sáng" : "Chuyển sang nền tối"}
+      >
+        {theme === "dark" ? "☀️ Sáng" : "🌙 Tối"}
+      </button>
+      <a href="/" className="admin-btn admin-btn--ghost" target="_blank">🌐 Xem trang</a>
+      <button className="admin-btn admin-btn--ghost admin-btn--danger-text" onClick={onLogout}>🚪 Đăng xuất</button>
+    </div>
+  );
 
   useEffect(() => { fetchProducts(); }, []);
 
@@ -165,10 +196,7 @@ function AdminDashboard({ onLogout }) {
           <div className="admin-panel__header-left">
             <h1>🛍️ Quản lý cửa hàng</h1>
           </div>
-          <div className="admin-panel__header-right">
-            <a href="/" className="admin-btn admin-btn--ghost" target="_blank">🌐 Xem trang</a>
-            <button className="admin-btn admin-btn--ghost admin-btn--danger-text" onClick={onLogout}>🚪 Đăng xuất</button>
-          </div>
+          {headerRight}
         </header>
 
         <div className="admin-tabs">
@@ -190,10 +218,7 @@ function AdminDashboard({ onLogout }) {
           <div className="admin-panel__header-left">
             <h1>🛍️ Quản lý cửa hàng</h1>
           </div>
-          <div className="admin-panel__header-right">
-            <a href="/" className="admin-btn admin-btn--ghost" target="_blank">🌐 Xem trang</a>
-            <button className="admin-btn admin-btn--ghost admin-btn--danger-text" onClick={onLogout}>🚪 Đăng xuất</button>
-          </div>
+          {headerRight}
         </header>
 
         <div className="admin-tabs">
@@ -219,10 +244,7 @@ function AdminDashboard({ onLogout }) {
           <div className="admin-panel__header-left">
             <h1>🛍️ Quản lý cửa hàng</h1>
           </div>
-          <div className="admin-panel__header-right">
-            <a href="/" className="admin-btn admin-btn--ghost" target="_blank">🌐 Xem trang</a>
-            <button className="admin-btn admin-btn--ghost admin-btn--danger-text" onClick={onLogout}>🚪 Đăng xuất</button>
-          </div>
+          {headerRight}
         </header>
 
         <div className="admin-tabs">

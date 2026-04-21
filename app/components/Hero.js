@@ -23,6 +23,7 @@ export default function Hero() {
   const [data, setData] = useState(null);
   const [slides, setSlides] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [aspectRatio, setAspectRatio] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const timerRef = useRef(null);
   const touchStartRef = useRef(0);
@@ -87,6 +88,18 @@ export default function Hero() {
     return () => clearInterval(timerRef.current);
   }, [slides.length, nextSlide]);
 
+  // Đo aspect-ratio của ảnh đầu tiên để áp dụng cho tất cả slide (đồng đều kích thước)
+  useEffect(() => {
+    if (slides.length === 0) return;
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        setAspectRatio(img.naturalWidth / img.naturalHeight);
+      }
+    };
+    img.src = slides[0];
+  }, [slides]);
+
   // Touch handlers for mobile swipe
   function handleTouchStart(e) {
     touchStartRef.current = e.touches[0].clientX;
@@ -121,11 +134,21 @@ export default function Hero() {
         transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
       }}>
         {slides.map((url, i) => (
-          <div key={i} style={{ width: `${100 / slides.length}%`, flexShrink: 0 }}>
+          <div
+            key={i}
+            style={{
+              width: `${100 / slides.length}%`,
+              flexShrink: 0,
+              aspectRatio: aspectRatio || "16 / 9",
+              maxHeight: "70vh",
+              overflow: "hidden",
+              background: "#f5f5f5",
+            }}
+          >
             <img
               src={url}
               alt={`Banner ${i + 1}`}
-              style={{ width: "100%", height: "auto", display: "block" }}
+              style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
             />
           </div>
         ))}
@@ -144,7 +167,7 @@ export default function Hero() {
               {data.banner_title}
             </h1>
           )}
-          {data.banner_cta && (
+          {data.banner_cta && false && (
             <a href="#shop" style={{
               display: "inline-flex",
               alignItems: "center",
@@ -152,17 +175,20 @@ export default function Hero() {
               fontSize: "11px",
               letterSpacing: "3px",
               textTransform: "uppercase",
-              fontWeight: 500,
-              color: "#1B2A1B",
-              border: "1px solid rgba(27,42,27,0.6)",
+              fontWeight: 800,
+              border: "none",
               padding: "12px 28px",
-              background: "rgba(255,255,255,0.75)",
-              backdropFilter: "blur(6px)",
-              WebkitBackdropFilter: "blur(6px)",
+              background: "transparent",
               textDecoration: "none",
             }}>
-              <span>{data.banner_cta}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <span style={{
+                backgroundImage: "linear-gradient(90deg, #FF0844 0%, #FF6A00 50%, #FFB800 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                color: "transparent",
+              }}>{data.banner_cta}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF0844" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </a>
