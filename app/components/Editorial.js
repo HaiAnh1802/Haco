@@ -118,8 +118,9 @@ export default function Editorial() {
 
           // Fetch selected products
           const productIds = sectionData.product_ids || [];
+          console.log("[Editorial] product_ids:", productIds, "length:", productIds.length);
           if (productIds.length > 0) {
-            const { data: productsData } = await supabase
+            const { data: productsData, error: prodError } = await supabase
               .from("haco_products")
               .select(`
                 id, slug, name, card_image, images, category,
@@ -127,6 +128,7 @@ export default function Editorial() {
               `)
               .in("id", productIds);
 
+            console.log("[Editorial] productsData:", productsData, "error:", prodError);
             if (productsData) {
               // Maintain the order from product_ids
               const ordered = productIds
